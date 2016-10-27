@@ -100,7 +100,7 @@ void scrollMessage(byte message, byte mode) {
     if (mode != SCROLL2X) {
       effectDelay = 30;
     } else {
-      effectDelay = 10;
+      effectDelay = 7;
     }
   }
 
@@ -392,9 +392,9 @@ byte eqLevels[12] = {0};
 int eqDecay = 0;
 int eqRandomizerDelay = 0;
 int eqRandomizerCap = 0;
-#define eqDecaySpeed 40
-#define eqMinInterval 50
-#define eqMaxInterval 200
+#define eqDecaySpeed 30
+#define eqMinInterval 40
+#define eqMaxInterval 150
 
 void fakeEQ() {
 
@@ -470,6 +470,8 @@ void scrollingHearts() {
   writeBitFrame(0, 0);
 }
 
+
+
 void messageOne() {
   scrollMessage(0, SCROLL1X); 
 }
@@ -481,4 +483,158 @@ void messageTwo() {
 void messageThree() {
   scrollMessage(2, SCROLL1X);
 }
+
+
+
+
+// Scroll grayscale frame
+void spinGrayscale() {
+
+  static float spinIndex = 0;
+  const byte imgWidth = 48;
+  const byte imgHeight = 48;
+  const byte orbitRadiusX = (imgWidth-24)/2;
+  const byte orbitRadiusY = (imgHeight-8)/2;
+  
+  if (!effectInit) {
+    switchDrawType(0,1);
+    effectInit = true;
+    effectDelay = 15;
+  }
+
+  float offsetX = orbitRadiusX*sin(spinIndex)+imgWidth/2-11;
+  float offsetY = orbitRadiusY*cos(spinIndex)+imgHeight/2-3;
+
+  spinIndex += 0.1;
+  int tempX; int tempY;
+  
+  for (byte y = 0; y < 8; y++) {
+    for (byte x = 0; x < 24; x++) {
+      tempX = x+offsetX;
+      tempY = y+offsetY;
+      if (tempX >=0 && tempX < imgWidth && tempY >= 0 && tempY < imgHeight) {
+        GlassesPWM[x][y] = getCIE(pgm_read_byte(&(Grayscale[tempX][tempY])));
+      } else {
+        GlassesPWM[x][y] = 0;
+      }
+    }
+  }
+
+  writePWMFrame(0);
+}
+
+void rampStrober() {
+  static int strobeDelay = 0;
+  static int strobeCount = 25;
+  static byte strobeToggle = 0;
+  static byte rampToggle = 0;
+  
+  // start new pattern
+  if (!effectInit) {
+    switchDrawType(0,0);
+    effectInit = true;
+    effectDelay = 1;
+    strobeDelay = 0;
+    strobeCount = 25;
+    strobeToggle = 0;
+    rampToggle = 0;
+  }
+  
+  if (strobeDelay > strobeCount) {
+  
+    for (int i = 0; i < 24; i++) {
+      GlassesBits[i][0] = strobeToggle*(0b11111 << random(0,4));
+    }
+    
+    if (strobeToggle == 0) {
+      strobeToggle = 1;
+    } else {
+      strobeToggle = 0;
+    }
+    
+    strobeDelay = 0;
+    
+    if (rampToggle == 0) {
+      strobeCount--;
+      if (strobeCount < 3) rampToggle = 1;
+    } else {
+      strobeCount++;
+      if (strobeCount > 25) rampToggle = 0;
+    }
+    
+  }
+  
+  strobeDelay++;
+  
+  writeBitFrame(0,0);
+  
+
+}
+
+// Draw a circular sine plasma
+void dualPlasma() {
+  static int dualPlasOffset = 0;
+
+  if (!effectInit) {
+    switchDrawType(0,1);
+    effectInit = true;
+    effectDelay = 1;
+    dualPlasOffset = 0;
+  }
+  
+  for (int x = 0; x < 12; x++) {
+    for (int y = 0; y < 8; y++) {
+      byte brightness = qsine((sqrt((x-4.5)*(x-4.5) + (y-3.5)*(y-3.5))*70) - dualPlasOffset);
+      //if (brightness < 75) brightness = brightness/(75-brightness);
+      GlassesPWM[x][y] = pgm_read_byte(&cie[brightness]);
+    }
+  }
+  
+    for (int x = 12; x < 24; x++) {
+    for (int y = 0; y < 8; y++) {
+      byte brightness = qsine((sqrt((x-18.5)*(x-18.5) + (y-3.5)*(y-3.5))*70) - dualPlasOffset);
+      //if (brightness < 75) brightness = brightness/(75-brightness);
+      GlassesPWM[x][y] = pgm_read_byte(&cie[brightness]);
+    }
+  }
+  
+  
+
+  writePWMFrame(0);
+  dualPlasOffset += 15;
+  if (dualPlasOffset > 359) dualPlasOffset -= 359;
+
+}
+
+
+
+
+void blockyNoise() {
+
+  // start new pattern
+  if (!effectInit) {
+    switchDrawType(0,0);
+    effectInit = true;
+    effectDelay = 20;
+  }
+  
+  fillBitFrame(0,0);
+  
+  byte randX, randY;
+  
+  for (byte i = 0; i < 15; i++) {
+    randX = random(0,12);
+    randY = random(1,5);
+    
+    GlassesBits[randX*2][0] |= 0b11 << (8 - randY*2);
+    GlassesBits[randX*2+1][0] |= 0b11 << (8 - randY*2);
+  }
+  
+  writeBitFrame(0,0);
+  
+}
+
+
+
+
 

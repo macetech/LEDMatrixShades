@@ -46,17 +46,22 @@ void setup() {
 
 
 // List of effects that will be displayed
-functionList effectList[] = { messageOne,
+functionList effectList[] = { beatingHearts,
+                              messageOne,
                               sparkles,
+                              spinGrayscale,
+                              //rampStrober,
                               scrollingHearts,
-                              rider,
-                              Plasma,
                               messageTwo,
+                              dualPlasma,
                               fakeEQ,
-                              fire,
-                              beatingHearts,
-                              slantBars,
-                              rain
+                              blockyNoise,
+                              Plasma,
+                              rain,
+                              messageThree,
+                              rider,
+                              sines,
+                              slantBars
 };
 
 const byte numEffects = (sizeof(effectList)/sizeof(effectList[0]));
